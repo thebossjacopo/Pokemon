@@ -1,0 +1,51 @@
+services:
+  - type: web
+    name: jtb-api-gateway
+    env: docker
+    plan: starter
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "8080"
+      # Set DATABASE_URL and (optionally) INIT_TOKEN in the environment group or service settings
+    dockerfilePath: services/api-gateway/Dockerfile
+
+  - type: web
+    name: jtb-frontend
+    env: docker
+    plan: starter
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: "3000"
+      # Set NEXT_PUBLIC_API_URL after api is live, e.g.: https://jtb-api-gateway.onrender.com
+    dockerfilePath: frontend/Dockerfile
+
+  - type: worker
+    name: jtb-connectors-wkr
+    env: docker
+    plan: starter
+    autoDeploy: true
+    envVars: []
+    dockerfilePath: services/connectors-wkr/Dockerfile
+
+  - type: worker
+    name: jtb-pricing-svc
+    env: docker
+    plan: starter
+    autoDeploy: true
+    envVars: []
+    dockerfilePath: services/pricing-svc/Dockerfile
+
+  - type: cron
+    name: jtb-cron-recompute
+    env: docker
+    schedule: "*/30 * * * *"
+    dockerfilePath: services/pricing-svc/Dockerfile
+    # Recompute baselines every 30 minutes (no-op until data exist)
+    command: ["bash", "-lc", "python -m app.tasks recompute"]
+
+# Optional: create resources via the Render UI and then set env vars on services:
+# - Managed PostgreSQL (copy Internal Database URL to DATABASE_URL)
+# - Managed Redis (copy the Redis URL to REDIS_URL if you later add Celery)
