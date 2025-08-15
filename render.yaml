@@ -8,7 +8,10 @@ services:
     envVars:
       - key: PORT
         value: "8080"
-      # Set DATABASE_URL and (optionally) INIT_TOKEN in the environment group or service settings
+      # Imposta in Render un Environment Group con:
+      # - DATABASE_URL (Postgres Internal URL)
+      # - INIT_TOKEN  (stringa a tua scelta)
+      # poi collegalo al servizio dalla UI
     dockerfilePath: services/api-gateway/Dockerfile
 
   - type: web
@@ -19,7 +22,8 @@ services:
     envVars:
       - key: PORT
         value: "3000"
-      # Set NEXT_PUBLIC_API_URL after api is live, e.g.: https://jtb-api-gateway.onrender.com
+      # Dopo che l'API è live, aggiungi nella UI:
+      # - NEXT_PUBLIC_API_URL = https://<url-di-jtb-api-gateway>
     dockerfilePath: frontend/Dockerfile
 
   - type: worker
@@ -41,11 +45,7 @@ services:
   - type: cron
     name: jtb-cron-recompute
     env: docker
-    schedule: "*/30 * * * *"
+    schedule: "*/30 * * * *" # ogni 30 minuti
     dockerfilePath: services/pricing-svc/Dockerfile
-    # Recompute baselines every 30 minutes (no-op until data exist)
-    command: ["bash", "-lc", "python -m app.tasks recompute"]
+    startCommand: bash -lc "python -m app.tasks recompute"
 
-# Optional: create resources via the Render UI and then set env vars on services:
-# - Managed PostgreSQL (copy Internal Database URL to DATABASE_URL)
-# - Managed Redis (copy the Redis URL to REDIS_URL if you later add Celery)
