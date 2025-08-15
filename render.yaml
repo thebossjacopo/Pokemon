@@ -6,12 +6,9 @@ services:
     autoDeploy: true
     healthCheckPath: /health
     envVars:
+      - fromGroup: jtb-prod
       - key: PORT
         value: "8080"
-      # Imposta in Render un Environment Group con:
-      # - DATABASE_URL (Postgres Internal URL)
-      # - INIT_TOKEN  (stringa a tua scelta)
-      # poi collegalo al servizio dalla UI
     dockerfilePath: services/api-gateway/Dockerfile
 
   - type: web
@@ -20,9 +17,10 @@ services:
     plan: starter
     autoDeploy: true
     envVars:
+      - fromGroup: jtb-prod
       - key: PORT
         value: "3000"
-      # Dopo che l'API è live, aggiungi nella UI:
+      # Imposta dopo il primo deploy dell'API:
       # - NEXT_PUBLIC_API_URL = https://<url-di-jtb-api-gateway>
     dockerfilePath: frontend/Dockerfile
 
@@ -31,7 +29,8 @@ services:
     env: docker
     plan: starter
     autoDeploy: true
-    envVars: []
+    envVars:
+      - fromGroup: jtb-prod
     dockerfilePath: services/connectors-wkr/Dockerfile
 
   - type: worker
@@ -39,7 +38,9 @@ services:
     env: docker
     plan: starter
     autoDeploy: true
-    envVars: []
+    envVars:
+      - fromGroup: jtb-prod
+      # Nessun RUN_MODE → default "loop" dal Dockerfile
     dockerfilePath: services/pricing-svc/Dockerfile
 
   - type: cron
@@ -47,5 +48,7 @@ services:
     env: docker
     schedule: "*/30 * * * *" # ogni 30 minuti
     dockerfilePath: services/pricing-svc/Dockerfile
-    startCommand: bash -lc "python -m app.tasks recompute"
-
+    envVars:
+      - fromGroup: jtb-prod
+      - key: RUN_MODE
+        value: "recompute"
